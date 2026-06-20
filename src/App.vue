@@ -10,6 +10,7 @@
         </button>
         <SaveManager 
           :slots="saveSlots"
+          :daily-saves="dailySaves"
           @save="handleSave"
           @load="handleLoad"
           @delete="handleDelete"
@@ -130,6 +131,7 @@ const {
   saveGame,
   loadGame,
   getSaveSlots,
+  getDailySaves,
   deleteSave,
   restartGame
 } = useGame()
@@ -149,6 +151,7 @@ const {
 } = useAudio()
 
 const saveSlots = computed(() => getSaveSlots())
+const dailySaves = computed(() => getDailySaves())
 
 const gameBgClass = computed(() => ({
   'day-bg': isDay.value && !isBlizzard.value,

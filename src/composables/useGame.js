@@ -18,6 +18,7 @@ export function useGame() {
   const NIGHT_DURATION = 20000
   const HEAT_CONSUMPTION_RATE = 2
   const BLIZZARD_CHANCE = 0.15
+  const MAX_DAILY_SAVES = 30
 
   let dayNightTimer = null
   let nightConsumptionTimer = null
@@ -88,6 +89,7 @@ export function useGame() {
       clearInterval(nightConsumptionTimer)
       nightConsumptionTimer = null
     }
+    saveDailyGame()
   }
 
   function toggleDayNight() {
@@ -292,6 +294,55 @@ export function useGame() {
     return slots
   }
 
+  function saveDailyGame() {
+    const slot = `daily_day${dayCount.value}`
+    const gameState = {
+      temperature: temperature.value,
+      heat: heat.value,
+      wood: wood.value,
+      food: food.value,
+      hide: hide.value,
+      tools: tools.value,
+      isDay: isDay.value,
+      dayCount: dayCount.value,
+      isBlizzard: isBlizzard.value,
+      savedAt: Date.now(),
+      isDaily: true
+    }
+    localStorage.setItem(`snowSurvival_${slot}`, JSON.stringify(gameState))
+    cleanupDailySaves()
+  }
+
+  function getDailySaves() {
+    const saves = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key.startsWith('snowSurvival_daily_day')) {
+        try {
+          const data = JSON.parse(localStorage.getItem(key))
+          const slotName = key.replace('snowSurvival_', '')
+          saves.push({
+            name: slotName,
+            dayCount: data.dayCount,
+            savedAt: data.savedAt,
+            isDaily: true
+          })
+        } catch (e) {}
+      }
+    }
+    return saves.sort((a, b) => b.dayCount - a.dayCount)
+  }
+
+  function cleanupDailySaves() {
+    const saves = getDailySaves()
+    if (saves.length > MAX_DAILY_SAVES) {
+      const toDelete = saves.slice(MAX_DAILY_SAVES)
+      toDelete.forEach(save => {
+        localStorage.removeItem(`snowSurvival_${save.name}`)
+      })
+    }
+  }
+
   function deleteSave(slot) {
     localStorage.removeItem(`snowSurvival_${slot}`)
     addLog(`已删除存档：${slot}`, 'info')
@@ -352,6 +403,7 @@ export function useGame() {
     saveGame,
     loadGame,
     getSaveSlots,
+    getDailySaves,
     deleteSave,
     restartGame
   }
